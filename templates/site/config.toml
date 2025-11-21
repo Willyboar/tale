@@ -1,0 +1,46 @@
+# Site/Blog Configuration
+
+# Title of the Site/Blog
+title = "Tale"
+
+# Description of the Site/Blog
+description = "A Gleam static site generator"
+
+# Author of the Site/Blog
+# Will be set as post author if not define in the post metadata
+author = "Tale Team"
+
+# Base URL of the Site/Blog
+baseUrl = "https://example.com"
+
+# The Directory where static files will be generated for deployment
+# Default: "public" if not defined
+publishDir = "public"
+
+# The Directory where content files are located
+# Default: "content" if not defined
+contentDir = "content"
+
+# The Theme to use for the Site/Blog
+# Default: "default" if not defined
+theme = "default"
+
+# The Number of posts to display per page
+# pagination = 5
+
+# Navigation menu (order matters)
+[menus]
+  [[menus.main]]
+    name = "Home"
+    pageRef = "/"
+    weight = 10
+
+  [[menus.main]]
+    name = "About"
+    pageRef = "/about"
+    weight = 20
+
+  [[menus.main]]
+    name = "Tags"
+    pageRef = "/tags/"
+    weight = 30

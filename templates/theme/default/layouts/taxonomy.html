@@ -1,0 +1,15 @@
+<main class="layout layout--tags">
+    <section class="page-hero">
+        <hgroup>
+            <h1>{{metadata.title}}</h1>
+            <p>{{metadata.description}}</p>
+        </hgroup>
+    </section>
+    <section class="tag-directory">
+        <div class="tag-list">
+            {{#each site_tags}}
+            <a href="{{permalink}}">{{name}} ({{count}})</a>
+            {{/each}}
+        </div>
+    </section>
+</main>

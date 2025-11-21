@@ -1,0 +1,12 @@
+<article class="post-card">
+    <p class="post-meta">{{date}} · {{author}}</p>
+    <h2><a href="{{permalink}}">{{title}}</a></h2>
+    <p>{{description}}</p>
+    {{#if has_tags}}
+    <div class="tag-list">
+        {{#each tags}}
+        <a href="{{permalink}}">{{name}}</a>
+        {{/each}}
+    </div>
+    {{/if}}
+</article>
