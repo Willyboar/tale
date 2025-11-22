@@ -11,15 +11,10 @@ import gleam/time/calendar
 import gleam/time/timestamp
 import simplifile
 import tale/paths
+import tale/templates
 import tale/util
 
-const templates_root = "templates"
-
-const site_template_root = templates_root <> "/site"
-
 const default_theme_name = "default"
-
-const theme_template_root = templates_root <> "/theme/" <> default_theme_name
 
 /// Creates a new site rooted at the provided path. The generated site copies
 /// Tale's default content and theme, and updates the config title.
@@ -70,9 +65,8 @@ fn create_theme(name: String) -> Result(String, String) {
 }
 
 fn scaffold_site(name: String) -> Result(String, String) {
-  use _ <- result.try(copy_directory(site_template_root, name))
-  use _ <- result.try(copy_directory(
-    theme_template_root,
+  use _ <- result.try(templates.write_site(name))
+  use _ <- result.try(templates.write_default_theme(
     name <> "/themes/" <> default_theme_name,
   ))
   use _ <- result.try(update_config_title(name <> "/config.toml", name))
@@ -81,7 +75,7 @@ fn scaffold_site(name: String) -> Result(String, String) {
 }
 
 fn scaffold_theme(path: String, name: String) -> Result(String, String) {
-  use _ <- result.try(copy_directory(theme_template_root, path))
+  use _ <- result.try(templates.write_default_theme(path))
   use _ <- result.try(update_theme_name(path <> "/theme.toml", name))
 
   Ok("Theme " <> name <> " created at " <> path <> ".")
@@ -125,18 +119,6 @@ fn scaffold_post(title_source: String, dest: String) -> Result(String, String) {
     "Unable to write post at " <> dest <> ": " <> simplifile.describe_error(err)
   })
   |> result.map(fn(_) { "Post created at " <> dest <> "." })
-}
-
-fn copy_directory(src: String, dest: String) -> Result(Nil, String) {
-  simplifile.copy_directory(src, dest)
-  |> result.map_error(fn(err) {
-    "Unable to copy directory "
-    <> src
-    <> " -> "
-    <> dest
-    <> ": "
-    <> simplifile.describe_error(err)
-  })
 }
 
 fn path_exists(path: String) -> Result(Bool, String) {
@@ -223,16 +205,7 @@ fn quoted(value: String) -> String {
 fn load_post_template() -> Result(String, String) {
   case simplifile.read("archetypes/default.md") {
     Ok(contents) -> Ok(contents)
-    Error(simplifile.Enoent) -> {
-      let fallback = site_template_root <> "/archetypes/default.md"
-      simplifile.read(fallback)
-      |> result.map_error(fn(err) {
-        "Unable to read archetype at "
-        <> fallback
-        <> ": "
-        <> simplifile.describe_error(err)
-      })
-    }
+    Error(simplifile.Enoent) -> Ok(templates.default_post_archetype())
     Error(err) ->
       Error(
         "Unable to read archetype at archetypes/default.md: "

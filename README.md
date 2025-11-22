@@ -5,8 +5,7 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3?style=for-the-badge)](https://hexdocs.pm/tale/)
 
 
-Tale is a static site/blog generator that ships with a CLI to create blog/sites fast.
-It also focus on easy themes creation and use.
+Tale is a static site/blog generator that ships with a CLI focused on telling stories(blogging) quickly. Designed for easy theme swapping and generating. Contains a basic dev server with a bare live/reload feature. Hope you enjoy it!
 
 ## Installation
 
@@ -37,6 +36,8 @@ tale
 ```
 
 ## Quick Start
+
+> You can use all this commands without creating an escript by changing `tale` with `gleam run --`
 
 ### Create a new site
 
