@@ -5,9 +5,26 @@
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3?style=for-the-badge)](https://hexdocs.pm/tale/)
 
 
-Tale is a static site/blog generator that ships with a CLI focused on telling stories(blogging) quickly. Designed for easy theme swapping and generating. Contains a basic dev server with a bare live/reload feature. Hope you enjoy it!
+Tale is a static site/blog generator that ships with a CLI focused on telling stories(blogging) quickly. Designed for fast site creation and easy theme swapping and generating. Contains a basic dev server with a bare live/reload feature to help you monitor your developement. Hope you enjoy it!
+
+There are a lot of ways to install and use **tale**.
 
 ## Installation
+
+### Option 1
+
+You can install tale as a dev dependency in any gleam project:
+
+```sh 
+gleam add --dev tale
+```
+and use it to create a new site inside your gleam project like this:
+
+```sh
+gleam run -m tale new site <name>
+```
+
+### Option 2
 
 Clone the repository and cd into it:
 
@@ -41,7 +58,7 @@ tale
 
 ### Create a new site
 
-Once you have tale in your path(or not) you can create a new site with:
+Once you have tale in your path you can create a new site with:
 
 ```sh
 tale new site <name>
