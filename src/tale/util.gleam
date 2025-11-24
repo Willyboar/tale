@@ -6,6 +6,74 @@ import gleam/string
 import handles/error
 import tom
 
+/// Normalize the configured base URL so that joining paths is predictable.
+pub fn normalize_base_url(value: String) -> String {
+  value
+  |> string.trim
+  |> drop_trailing_slashes
+  |> normalize_root
+}
+
+fn drop_trailing_slashes(value: String) -> String {
+  case value {
+    "" -> ""
+    "/" -> ""
+    _ ->
+      case string.ends_with(value, "/") {
+        True -> drop_trailing_slashes(string.drop_end(value, 1))
+        False -> value
+      }
+  }
+}
+
+fn normalize_root(value: String) -> String {
+  case value {
+    "/" -> ""
+    other -> other
+  }
+}
+
+/// Build an absolute URL using the configured base URL and a site path.
+/// Paths starting with a scheme (e.g. https://) are returned untouched.
+pub fn absolute_url(base_url: String, path: String) -> String {
+  let cleaned_path = string.trim(path)
+
+  case cleaned_path {
+    "" -> base_or_root(base_url)
+    other ->
+      case is_absolute_path(other) {
+        True -> other
+        False -> {
+          let segment = ensure_leading_slash(other)
+          case base_url {
+            "" -> segment
+            base -> base <> segment
+          }
+        }
+      }
+  }
+}
+
+fn base_or_root(base_url: String) -> String {
+  case base_url {
+    "" -> "/"
+    other -> other
+  }
+}
+
+fn ensure_leading_slash(path: String) -> String {
+  case string.starts_with(path, "/") {
+    True -> path
+    False -> "/" <> path
+  }
+}
+
+fn is_absolute_path(value: String) -> Bool {
+  string.starts_with(value, "http://")
+  || string.starts_with(value, "https://")
+  || string.starts_with(value, "//")
+}
+
 /// get string or
 pub fn get_string_or(
   doc: Dict(String, tom.Toml),

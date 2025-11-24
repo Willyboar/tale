@@ -77,13 +77,16 @@ pub fn load() -> Result(SiteConfig, String) {
   )
 
   let legacy_base_url = util.get_string_or(doc, ["base_url"], "/")
+  let configured_base_url =
+    util.get_string_or(doc, ["baseUrl"], legacy_base_url)
+    |> util.normalize_base_url
   let menu_main = parse_menu(doc, ["menus", "main"])
 
   Ok(SiteConfig(
     title: util.get_string_or(doc, ["title"], "Untitled site"),
     description: util.get_string_or(doc, ["description"], ""),
     author: util.get_string_or(doc, ["author"], "Anonymous"),
-    base_url: util.get_string_or(doc, ["baseUrl"], legacy_base_url),
+    base_url: configured_base_url,
     public_root: util.get_string_or(doc, ["publishDir"], "public"),
     theme: util.get_string_or(doc, ["theme"], "default"),
     content_dir: util.get_string_or(doc, ["contentDir"], "contents"),

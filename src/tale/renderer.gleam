@@ -174,6 +174,7 @@ fn render_job(
 }
 
 fn build_page_context(job: RenderJob, config: SiteConfig) -> ctx.Value {
+  let base_url = config.base_url
   let metadata =
     ctx.Dict([
       ctx.Prop("title", ctx.Str(job.page.metadata.title)),
@@ -183,23 +184,27 @@ fn build_page_context(job: RenderJob, config: SiteConfig) -> ctx.Value {
       ctx.Prop("site_title", ctx.Str(config.title)),
       ctx.Prop("site_description", ctx.Str(config.description)),
       ctx.Prop("site_author", ctx.Str(config.author)),
-      ctx.Prop("site_base_url", ctx.Str(config.base_url)),
+      ctx.Prop("site_base_url", ctx.Str(base_url)),
       ctx.Prop("site_theme", ctx.Str(config.theme)),
       ctx.Prop("site_pagination", ctx.Int(option.unwrap(config.pagination, 0))),
       ctx.Prop("draft", ctx.Bool(job.page.metadata.draft)),
       ctx.Prop("author", ctx.Str(job.page.metadata.author)),
-      ctx.Prop("tags", tag_list_context(job.page.metadata.tags)),
-      ctx.Prop("permalink", ctx.Str(job.page.permalink)),
+      ctx.Prop("tags", tag_list_context(job.page.metadata.tags, base_url)),
+      ctx.Prop(
+        "permalink",
+        ctx.Str(util.absolute_url(base_url, job.page.permalink)),
+      ),
       ctx.Prop("is_home", ctx.Bool(job.page.permalink == "/")),
       ctx.Prop("has_tags", ctx.Bool(job.page.metadata.tags != [])),
-      ctx.Prop("site_menu", menu_context(config.menu_main)),
+      ctx.Prop("site_menu", menu_context(config.menu_main, base_url)),
       ctx.Prop("has_site_menu", ctx.Bool(config.menu_main != [])),
     ])
 
   let pagination_prop =
-    ctx.Prop("pagination", pagination_context(job.pagination))
+    ctx.Prop("pagination", pagination_context(job.pagination, base_url))
 
-  let tag_prop = ctx.Prop("current_tag", current_tag_context(job.current_tag))
+  let tag_prop =
+    ctx.Prop("current_tag", current_tag_context(job.current_tag, base_url))
 
   let body_prop = ctx.Prop("body", ctx.Str(job.page.body_html))
 
@@ -208,7 +213,7 @@ fn build_page_context(job: RenderJob, config: SiteConfig) -> ctx.Value {
     body_prop,
     pagination_prop,
     tag_prop,
-    ctx.Prop("site_tags", tags_context(job.site_tags)),
+    ctx.Prop("site_tags", tags_context(job.site_tags, base_url)),
     ctx.Prop("is_home", ctx.Bool(job.page.permalink == "/")),
     ctx.Prop("is_tag_page", ctx.Bool(option.is_some(job.current_tag))),
     ctx.Prop("is_index_page", ctx.Bool(option.is_none(job.current_tag))),
@@ -218,14 +223,15 @@ fn build_page_context(job: RenderJob, config: SiteConfig) -> ctx.Value {
   ]
 
   case content.is_list_layout(job.page) {
-    True -> ctx.Dict([ctx.Prop("pages", posts_context(job.posts)), ..base])
+    True ->
+      ctx.Dict([ctx.Prop("pages", posts_context(job.posts, base_url)), ..base])
     False -> ctx.Dict(base)
   }
 }
 
-fn posts_context(posts: List(content.PageData)) -> ctx.Value {
+fn posts_context(posts: List(content.PageData), base_url: String) -> ctx.Value {
   posts
-  |> list.map(post_summary_to_ctx)
+  |> list.map(fn(page) { post_summary_to_ctx(page, base_url) })
   |> ctx.List
 }
 
@@ -237,21 +243,24 @@ fn current_year_string() -> String {
   int.to_string(date.year)
 }
 
-fn post_summary_to_ctx(page: content.PageData) -> ctx.Value {
+fn post_summary_to_ctx(page: content.PageData, base_url: String) -> ctx.Value {
   ctx.Dict([
     ctx.Prop("title", ctx.Str(page.metadata.title)),
     ctx.Prop("description", ctx.Str(page.metadata.description)),
     ctx.Prop("date", ctx.Str(option.unwrap(page.metadata.date, ""))),
     ctx.Prop("slug", ctx.Str(page.metadata.slug)),
-    ctx.Prop("permalink", ctx.Str(page.permalink)),
+    ctx.Prop("permalink", ctx.Str(util.absolute_url(base_url, page.permalink))),
     ctx.Prop("author", ctx.Str(page.metadata.author)),
     ctx.Prop("draft", ctx.Bool(page.metadata.draft)),
     ctx.Prop("has_tags", ctx.Bool(page.metadata.tags != [])),
-    ctx.Prop("tags", tag_list_context(page.metadata.tags)),
+    ctx.Prop("tags", tag_list_context(page.metadata.tags, base_url)),
   ])
 }
 
-fn pagination_context(info: Option(PaginationInfo)) -> ctx.Value {
+fn pagination_context(
+  info: Option(PaginationInfo),
+  base_url: String,
+) -> ctx.Value {
   case info {
     None -> ctx.Dict([])
     Some(PaginationInfo(
@@ -260,61 +269,70 @@ fn pagination_context(info: Option(PaginationInfo)) -> ctx.Value {
       per_page: per,
       previous: previous,
       next: next,
-    )) ->
+    )) -> {
+      let abs_previous =
+        option.map(previous, fn(link) { util.absolute_url(base_url, link) })
+      let abs_next =
+        option.map(next, fn(link) { util.absolute_url(base_url, link) })
       ctx.Dict([
         ctx.Prop("current_page", ctx.Int(current)),
         ctx.Prop("total_pages", ctx.Int(total)),
         ctx.Prop("per_page", ctx.Int(per)),
-        ctx.Prop("previous", ctx.Str(option.unwrap(previous, ""))),
-        ctx.Prop("next", ctx.Str(option.unwrap(next, ""))),
-        ctx.Prop("has_previous", ctx.Bool(option.is_some(previous))),
-        ctx.Prop("has_next", ctx.Bool(option.is_some(next))),
+        ctx.Prop("previous", ctx.Str(option.unwrap(abs_previous, ""))),
+        ctx.Prop("next", ctx.Str(option.unwrap(abs_next, ""))),
+        ctx.Prop("has_previous", ctx.Bool(option.is_some(abs_previous))),
+        ctx.Prop("has_next", ctx.Bool(option.is_some(abs_next))),
         ctx.Prop("has_pages", ctx.Bool(total > 1)),
       ])
+    }
   }
 }
 
-fn current_tag_context(tag: Option(TagContext)) -> ctx.Value {
+fn current_tag_context(tag: Option(TagContext), base_url: String) -> ctx.Value {
   case tag {
     None -> ctx.Dict([])
-    Some(TagContext(name: name, slug: slug, permalink: link, posts: posts)) ->
+    Some(TagContext(name: name, slug: slug, permalink: link, posts: posts)) -> {
+      let absolute_link = util.absolute_url(base_url, link)
       ctx.Dict([
         ctx.Prop("name", ctx.Str(name)),
         ctx.Prop("slug", ctx.Str(slug)),
-        ctx.Prop("permalink", ctx.Str(link)),
+        ctx.Prop("permalink", ctx.Str(absolute_link)),
         ctx.Prop("count", ctx.Int(list.length(posts))),
-        ctx.Prop("posts", posts_context(posts)),
+        ctx.Prop("posts", posts_context(posts, base_url)),
       ])
+    }
   }
 }
 
-fn tags_context(tags: List(TagContext)) -> ctx.Value {
+fn tags_context(tags: List(TagContext), base_url: String) -> ctx.Value {
   tags
   |> list.map(fn(tag) {
     let TagContext(name: name, slug: slug, permalink: link, posts: posts) = tag
+    let absolute_link = util.absolute_url(base_url, link)
     ctx.Dict([
       ctx.Prop("name", ctx.Str(name)),
       ctx.Prop("slug", ctx.Str(slug)),
-      ctx.Prop("permalink", ctx.Str(link)),
+      ctx.Prop("permalink", ctx.Str(absolute_link)),
       ctx.Prop("count", ctx.Int(list.length(posts))),
-      ctx.Prop("posts", posts_context(posts)),
+      ctx.Prop("posts", posts_context(posts, base_url)),
     ])
   })
   |> ctx.List
 }
 
-fn tag_list_context(tags: List(String)) -> ctx.Value {
+fn tag_list_context(tags: List(String), base_url: String) -> ctx.Value {
   tags
-  |> list.map(tag_value)
+  |> list.map(fn(tag) { tag_value(tag, base_url) })
   |> ctx.List
 }
 
-fn tag_value(name: String) -> ctx.Value {
+fn tag_value(name: String, base_url: String) -> ctx.Value {
   let slug = util.slugify(name)
+  let link = util.absolute_url(base_url, tag_permalink_from_slug(slug))
   ctx.Dict([
     ctx.Prop("name", ctx.Str(name)),
     ctx.Prop("slug", ctx.Str(slug)),
-    ctx.Prop("permalink", ctx.Str(tag_permalink_from_slug(slug))),
+    ctx.Prop("permalink", ctx.Str(link)),
   ])
 }
 
@@ -322,13 +340,14 @@ fn tag_permalink_from_slug(slug: String) -> String {
   "/tags/" <> slug <> "/"
 }
 
-fn menu_context(items: List(MenuItem)) -> ctx.Value {
+fn menu_context(items: List(MenuItem), base_url: String) -> ctx.Value {
   items
   |> list.map(fn(item) {
     let config.MenuItem(label: label, url: url, weight: _) = item
+    let absolute_url = util.absolute_url(base_url, url)
     ctx.Dict([
       ctx.Prop("label", ctx.Str(label)),
-      ctx.Prop("url", ctx.Str(url)),
+      ctx.Prop("url", ctx.Str(absolute_url)),
     ])
   })
   |> ctx.List
