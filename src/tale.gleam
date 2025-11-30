@@ -14,7 +14,7 @@
 import tale/cli
 
 /// Version
-const version = "1.0.0"
+const version = "1.1.0"
 
 // TODO: Change version on every release!
 
