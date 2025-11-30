@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0 - 2025-11-30
+
+- Add repo link
+- Upload image to be displayed in hex.
+
+
 ## v1.0.0 - 2025-11-24
 
 - Fix base_url links
