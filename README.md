@@ -1,5 +1,5 @@
 # Tale - A static story telling generator
-<img width="280" align="right" alt="Tale" src="tale.png" />
+<img width="280" align="right" alt="Tale" src="https://github.com/user-attachments/assets/2dafb584-030c-4878-89c8-30332c21ef60" />
 
 [![Package Version](https://img.shields.io/hexpm/v/tale?style=for-the-badge)](https://hex.pm/packages/tale)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3?style=for-the-badge)](https://hexdocs.pm/tale/)

@@ -6,7 +6,7 @@ version = "1.0.0"
 #
 description = "A static story telling generator"
 licences = ["MIT"]
-# repository = { type = "github", user = "", repo = "" }
+repository = { type = "github", user = "Willyboar", repo = "tale" }
 # links = [{ title = "Website", href = "" }]
 
 
